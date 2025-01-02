@@ -226,7 +226,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const formData = {
       firstName: document.getElementById("first_name").value.trim(),
       lastName: document.getElementById("last_name").value.trim(),
-      contactInfo: document.getElementById("contactInfo").value.trim(),
+      phone: document.getElementById("phone").value.trim(),
+      email: document.getElementById("email").value.trim(),
       guestCount: parseInt(guestCount.value) || 0,
       eventType: eventTypeSelect.value,
       venue: venueSelect.value,

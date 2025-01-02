@@ -1,29 +1,29 @@
 CREATE TABLE customer (
-    Customer_id INT PRIMARY KEY,
+    Customer_id SERIAl PRIMARY KEY,
     First_name VARCHAR(50) NOT NULL,
     Last_name VARCHAR(50) NOT NULL,
     Phone VARCHAR(15) NOT NULL,
     Email VARCHAR(100) NOT NULL
 );
 CREATE TABLE Decoration (
-    Decor_id INT PRIMARY KEY,            -- Primary Key
+    Decor_id SERIAL PRIMARY KEY,            -- Primary Key
     Decor_style VARCHAR(50) NOT NULL,    -- Decoration style (e.g., modern, classic)
     Decor_cost DECIMAL(10, 2) NOT NULL   -- Cost of the decoration
 );
 CREATE TABLE Venue (
-    Venue_id INT PRIMARY KEY,                -- Primary Key, cannot be NULL
+    Venue_id SERIAL PRIMARY KEY,                -- Primary Key, cannot be NULL
     Facilities VARCHAR(255),                -- Facilities can have NULL values
     location VARCHAR(100),                  -- Location can have NULL values
     Capacity INT                         -- Capacity can have NULL values              
 );
 CREATE TABLE Supervisor (
-    Employee_id INT PRIMARY KEY,
+    Employee_id SERIAL PRIMARY KEY,
     Manager_id INT,
     -- Other employee attributes can be added here
-    FOREIGN KEY (Manager_id) REFERENCES Employee(Employee_id)
+    FOREIGN KEY (Manager_id) REFERENCES Supervisor(Employee_id)
 );
 CREATE TABLE catering (
-    category_id INT PRIMARY KEY,     -- Primary key to uniquely identify each category
+    category_id SERIAL PRIMARY KEY,     -- Primary key to uniquely identify each category
     menu_type VARCHAR(255)           -- Type of menu (e.g., vegetarian, non-vegetarian, vegan)
 );
 CREATE TABLE menu (
@@ -49,11 +49,11 @@ CREATE TABLE comedy (
     FOREIGN KEY (entertainment_id) REFERENCES entertainment(entertainment_id)  -- Foreign key reference
 );
 CREATE TABLE entertainment (
-    entertainment_id INT PRIMARY KEY,         -- Unique identifier for each entertainment entry
+    entertainment_id SERIAL PRIMARY KEY,         -- Unique identifier for each entertainment entry
     cost DECIMAL(10, 2)                        -- Cost associated with the entertainment event
 );
 CREATE TABLE event (
-    event_id INT PRIMARY KEY,                        -- Unique identifier for each event
+    event_id SERIAL PRIMARY KEY,                        -- Unique identifier for each event
     event_type VARCHAR(255),                          -- Type of event (e.g., Wedding, Conference, Party)
     event_date DATE,                                  -- Date of the event
     venue_id INT,                                     -- Foreign key linking to the venue table

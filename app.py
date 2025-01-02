@@ -11,7 +11,7 @@ csrf = CSRFProtect(app)
 
 # Database configuration
 DB_CONFIG = {
-    'dbname': 'event_management',
+    'dbname': 'event_managements',
     'user': 'postgres',
     'password': 'sathvik123',
     'host': 'localhost',
@@ -125,23 +125,23 @@ def create_event():
         data = request.json
         
         # Input validation
-        required_fields = ['customer_name', 'contact_info', 'event_type', 
-                         'event_date', 'guest_count', 'venue', 'catering', 
-                         'decoration', 'entertainment']
+        # required_fields = ['customer_name', 'contact_info', 'event_type', 
+        #                  'event_date', 'guest_count', 'venue', 'catering', 
+        #                  'decoration', 'entertainment']
         
-        for field in required_fields:
-            if field not in data or not data[field]:
-                return jsonify({
-                    "success": False,
-                    "error": f"Missing required field: {field}"
-                }), 400
+        # for field in required_fields:
+        #     if field not in data or not data[field]:
+        #         return jsonify({
+        #             "success": False,
+        #             "error": f"Missing required field: {field}"
+        #         }), 400
 
         with conn.cursor() as cursor:
             # Check if customer already exists
             cursor.execute("""
                 SELECT customer_id FROM customer 
                 WHERE phone = %s OR email = %s
-            """, (data['contact_info']['phone'], data['contact_info']['email']))
+            """, (data['phone'], data['email']))
 
             customer_result = cursor.fetchone()
 
@@ -153,9 +153,9 @@ def create_event():
                     SET name = %s, phone = %s, email = %s
                     WHERE customer_id = %s
                 """, (
-                    data['customer_name'], 
-                    data['contact_info']['phone'], 
-                    data['contact_info']['email'], 
+                    data['firstName'], 
+                    data['phone'], 
+                    data['email'], 
                     customer_id
                 ))
             else:
@@ -165,9 +165,9 @@ def create_event():
                     VALUES (%s, %s, %s)
                     RETURNING customer_id
                 """, (
-                    data['customer_name'], 
-                    data['contact_info']['phone'], 
-                    data['contact_info']['email']
+                    data['firstName'], 
+                    data['phone'], 
+                    data['email']
                 ))
                 customer_id = cursor.fetchone()[0]
 
@@ -180,8 +180,8 @@ def create_event():
                 VALUES (%s, %s, %s, %s, %s, %s)
                 RETURNING event_id
             """, (
-                data['event_type'],    # Event type (e.g., birthday, wedding)
-                data['event_date'],    # Event date
+                data['eventType'],    # Event type (e.g., birthday, wedding)
+                data['eventDate'],    # Event date
                 data['venue'],         # Venue ID
                 data['catering'],      # Catering ID
                 data['decoration'],    # Decoration ID
@@ -231,13 +231,13 @@ def calculate_event_cost(data):
         'comedy': 15000
     }
     
-    catering_cost = CATERING_PRICES.get(data['catering'], 0) * data['guest_count']
+    catering_cost = CATERING_PRICES.get(data['catering'], 0) * data['guestCount']
     decoration_cost = DECORATION_PRICES.get(data['decoration'], 0)
     entertainment_cost = ENTERTAINMENT_PRICES.get(data['entertainment'], 0)
     venue_cost = 15000
     
     tax = (catering_cost + decoration_cost + entertainment_cost + venue_cost) * 0.18
-    service_charge = 7500 if data['guest_count'] > 100 else 3500
+    service_charge = 7500 if data['guestCount'] > 100 else 3500
     convenience_fee = 350
     security_deposit = 2500
     
