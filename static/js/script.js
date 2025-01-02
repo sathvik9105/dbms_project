@@ -184,93 +184,151 @@ document.addEventListener("DOMContentLoaded", () => {
   const bookingSummary = document.getElementById("bookingSummary");
   const summaryContent = document.getElementById("summaryContent");
 
+  
   // Update venue options based on user input
-  function updateVenueOptions() {
-    const selectedEvent = eventTypeSelect.value;
-    const selectedFacility = facilitiesSelect.value;
-    const guests = parseInt(guestCount.value) || 0;
+function updateVenueOptions() {
+  const selectedEvent = eventTypeSelect.value;
+  const selectedFacility = facilitiesSelect.value;
+  const guests = parseInt(guestCount.value) || 0;
 
-    // Clear current venue options
-    venueSelect.innerHTML = "<option value=''>Select venue</option>";
+  // Clear current venue options
+  venueSelect.innerHTML = "<option value=''>Select venue</option>";
 
-    // Populate options
-    if (venues[selectedEvent]) {
-      venues[selectedEvent]
-        .filter((venue) => {
-          const meetsCapacity = venue.capacity >= guests;
-          const meetsFacility =
-            !selectedFacility || venue.facilities.includes(selectedFacility);
-          return meetsCapacity && meetsFacility;
-        })
-        .forEach((venue) => {
-          const option = document.createElement("option");
-          option.value = venue.name;
-          const facilities = venue.facilities
-            .map((f) => f.replace(/_/g, " "))
-            .join(", ");
-          option.textContent = `${venue.name} (${facilities}) - Capacity: ${venue.capacity}`;
-          venueSelect.appendChild(option);
+  // Populate options
+  if (venues[selectedEvent]) {
+    venues[selectedEvent]
+      .filter((venue) => {
+        const meetsCapacity = venue.capacity >= guests;
+        const meetsFacility =
+          !selectedFacility || venue.facilities.includes(selectedFacility);
+        return meetsCapacity && meetsFacility;
+      })
+      .forEach((venue) => {
+        const option = document.createElement("option");
+        option.value = JSON.stringify({
+          name: venue.name,
+          facilities: venue.facilities,
+          capacity: venue.capacity,
+          location: venue.name,
         });
-    }
+        const facilities = venue.facilities
+          .map((f) => f.replace(/_/g, " "))
+          .join(", ");
+        option.textContent = `${venue.name} (${facilities}) - Capacity: ${venue.capacity}`;
+        venueSelect.appendChild(option);
+      });
   }
+}
+
+    
+
+
 
   // Event Listeners for dynamic updates
   eventTypeSelect.addEventListener("change", updateVenueOptions);
   facilitiesSelect.addEventListener("change", updateVenueOptions);
   guestCount.addEventListener("change", updateVenueOptions);
 
+  const pricing = {
+    catering: {
+      indian: 500,
+      continental: 700,
+      chinese: 600,
+      italian: 800,
+      mexican: 900,
+      japanese: 1000,
+      thai: 750,
+      vegan_special: 850,
+    },
+    decoration: { simple: 5000, premium: 10000, luxury: 20000 },
+    entertainment: { music: 8000, dance: 12000, comedy: 15000 },
+  };
+  
+
+
   // Handle form submission
   eventForm.addEventListener("submit", (e) => {
     e.preventDefault();
+console.log("submit");
+// Create formData including venue details
+const venueData = JSON.parse(document.getElementById("venue").value || "{}");
 
-    const formData = {
-      firstName: document.getElementById("first_name").value.trim(),
-      lastName: document.getElementById("last_name").value.trim(),
-      phone: document.getElementById("phone").value.trim(),
-      email: document.getElementById("email").value.trim(),
-      guestCount: parseInt(guestCount.value) || 0,
-      eventType: eventTypeSelect.value,
-      venue: venueSelect.value,
-      catering: document.getElementById("catering").value,
-      decoration: document.getElementById("decoration").value,
-      entertainment: document.getElementById("entertainment").value,
-      eventDate: document.getElementById("eventDate").value.trim(),
-    };
+const formData = {
+  firstName: document.getElementById("first_name").value.trim(),
+  lastName: document.getElementById("last_name").value.trim(),
+  phone: document.getElementById("phone").value.trim(),
+  email: document.getElementById("email").value.trim(),
+  guestCount: parseInt(document.getElementById("guestCount").value) || 0,
+  eventType: document.getElementById("eventType").value,
+  venue: venueData.name || "",
+  catering: document.getElementById("catering").value,
+  decor_style: document.getElementById("decoration").value,
+  decor_cost: pricing.decoration[document.getElementById("decoration").value],
+  entertainment_type: document.getElementById("entertainment").value,
+  entertainment_cost: pricing.entertainment[document.getElementById("entertainment").value],
+  eventDate: document.getElementById("eventDate").value.trim(),
+  facilities: venueData.facilities[0] || "venue1",
+  capacity: venueData.capacity || 0,
+  location: venueData.name || "",
+};
 
-    if (!formData.venue) {
-      alert("Please select a venue.");
-      return;
+
+fetch("/api/events", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(formData),
+})
+  .then((response) => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+    return response.json();
+  })
+  .then((data) => {
+    console.log("Success:", data);
+    alert("Event booked successfully!");
+  })
+  .catch((error) => {
+    console.error("Error:", error);
+    alert("Error booking event. Please try again.");
+  });
 
-    fetch("/api/events", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    }).then((response) => response.json());
 
-    const pricing = {
-      catering: {
-        indian: 500,
-        continental: 700,
-        chinese: 600,
-        italian: 800,
-        mexican: 900,
-        japanese: 1000,
-        thai: 750,
-        vegan_special: 850,
-      },
-      decoration: { simple: 5000, premium: 10000, luxury: 20000 },
-      entertainment: { music: 8000, dance: 12000, comedy: 15000 },
-    };
 
-    const costs = {
-      catering: pricing.catering[formData.catering] * formData.guestCount || 0,
-      decoration: pricing.decoration[formData.decoration] || 0,
-      entertainment: pricing.entertainment[formData.entertainment] || 0,
-      venue: Math.floor(Math.random() * 20000) + 5000,
-    };
+    // if (!formData.venue) {
+    //   alert("Please select a venue.");
+    //   return;
+    // }
+
+    // fetch("/api/events", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify(formData),
+    // }).then((response) => response.json());
+// try {
+  
+//   const response = await fetch("/api/events", {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify(formData),
+//   });
+//   console.log("api hit")
+// } catch (error) {
+//   console.error(error)
+// }
+
+const costs = {
+  catering: pricing.catering[formData.catering] * formData.guestCount || 0,
+  decoration: pricing.decoration[formData.decoration] || 0,
+  entertainment: pricing.entertainment[formData.entertainment] || 0,
+  venue: Math.floor(Math.random() * 20000) + 5000,
+};
 
     const subtotal = Object.values(costs).reduce(
       (total, cost) => total + cost,
@@ -290,7 +348,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <p><strong>Customer:</strong> ${formData.firstName} ${
       formData.lastName
     }</p>
-        <p><strong>Contact:</strong> ${formData.contactInfo}</p>
+        <p><strong>Contact:</strong> ${formData.phone}</p>
+        <p><strong>Contact:</strong> ${formData.email}</p>
         <p><strong>Event Type:</strong> ${formData.eventType}</p>
         <p><strong>Venue:</strong> ${formData.venue}</p>
         <p><strong>Event Date:</strong> ${formData.eventDate}</p>

@@ -11,9 +11,9 @@ csrf = CSRFProtect(app)
 
 # Database configuration
 DB_CONFIG = {
-    'dbname': 'event_managements',
+    'dbname': 'event_management',
     'user': 'postgres',
-    'password': 'sathvik123',
+    'password': 'JaiMataKi',
     'host': 'localhost',
     'port': 5432
 }
@@ -95,6 +95,15 @@ def home():
     else:
         return "Database connection failed"
 
+@app.route('/events')
+def events():
+    if(get_db_connection):
+        print("Database connection successful")
+        return render_template('events.html')
+    else:
+        return "Database connection failed"
+
+
 # Exempt CSRF for API endpoints
 @csrf.exempt
 @app.route('/api/venue-options', methods=['GET'])
@@ -117,27 +126,71 @@ def get_venue_options():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @csrf.exempt
+@app.route('/api/events', methods=['GET'])
+def get_events():
+    conn = None
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    e.event_id,
+                    e.event_type,
+                    e.event_date,
+                    c.first_name,
+                    c.last_name,
+                    c.phone,
+                    c.email,
+                    v.location as venue,
+                    v.capacity,
+                    v.facilities,
+                    cat.menu_type as catering,
+                    d.decor_style,
+                    d.decor_cost,
+                    ent.cost as entertainment_cost
+                FROM event e
+                JOIN customer c ON e.customer_id = c.customer_id
+                JOIN venue v ON e.venue_id = v.venue_id
+                JOIN catering cat ON e.catering_id = cat.category_id
+                JOIN decoration d ON e.decor_id = d.decor_id
+                JOIN entertainment ent ON e.entertainment_id = ent.entertainment_id
+                ORDER BY e.event_date DESC
+            """)
+            
+            columns = [desc[0] for desc in cursor.description]
+            events = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            
+            return jsonify(events)
+            
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        if conn:
+            return_db_connection(conn)
+
 @app.route('/api/events', methods=['POST'])
 def create_event():
     conn = None
     try:
         conn = get_db_connection()
         data = request.json
-        
+
         # Input validation
-        # required_fields = ['customer_name', 'contact_info', 'event_type', 
-        #                  'event_date', 'guest_count', 'venue', 'catering', 
-        #                  'decoration', 'entertainment']
-        
-        # for field in required_fields:
-        #     if field not in data or not data[field]:
-        #         return jsonify({
-        #             "success": False,
-        #             "error": f"Missing required field: {field}"
-        #         }), 400
+        required_fields = [
+            'firstName', 'lastName', 'phone', 'email', 
+            'eventType', 'eventDate', 'venue', 'catering', 
+            'decor_style', 'entertainment_cost'
+        ]
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({
+                    "success": False,
+                    "error": f"Missing required field: {field}"
+                }), 400
 
         with conn.cursor() as cursor:
-            # Check if customer already exists
+            # Customer handling remains the same...
+                 # Check if customer already exists
             cursor.execute("""
                 SELECT customer_id FROM customer 
                 WHERE phone = %s OR email = %s
@@ -147,58 +200,114 @@ def create_event():
 
             if customer_result:
                 customer_id = customer_result[0]
-                # Update customer information
                 cursor.execute("""
                     UPDATE customer 
-                    SET name = %s, phone = %s, email = %s
+                    SET first_name = %s, last_name = %s, phone = %s, email = %s
                     WHERE customer_id = %s
                 """, (
-                    data['firstName'], 
-                    data['phone'], 
-                    data['email'], 
-                    customer_id
+                    data['firstName'], data['lastName'], 
+                    data['phone'], data['email'], customer_id
                 ))
             else:
-                # Create new customer
                 cursor.execute("""
                     INSERT INTO customer (first_name, last_name, phone, email)
-                    VALUES (%s, %s, %s)
+                    VALUES (%s, %s, %s, %s)
                     RETURNING customer_id
                 """, (
-                    data['firstName'], 
-                    data['phone'], 
-                    data['email']
+                    data['firstName'], data['lastName'], 
+                    data['phone'], data['email']
                 ))
                 customer_id = cursor.fetchone()[0]
 
-            # Create event
+            # Fetch venue_id - Modified to use venue name
+            cursor.execute("SELECT venue_id FROM venue WHERE location = %s", 
+                         (data['venue'],))
+            venue_result = cursor.fetchone()
+            if not venue_result:
+                cursor.execute("""
+                INSERT INTO venue (
+                    facilities, location, capacity
+                )
+                VALUES (%s, %s, %s)
+                RETURNING venue_id
+                """, (
+                    data['facilities'], 
+                    data['venue'],  # Changed from location to venue
+                    data['capacity']
+                ))
+                venue_id = cursor.fetchone()[0]
+            else:
+                venue_id = venue_result[0]
+
+            # Fetch catering_id
+            cursor.execute("SELECT category_id FROM catering WHERE menu_type = %s", 
+                         (data['catering'],))
+            catering_result = cursor.fetchone()
+            if not catering_result:
+                cursor.execute("""
+                INSERT INTO catering (menu_type)
+                VALUES (%s)
+                RETURNING category_id
+                """, (data['catering'],))
+                catering_id = cursor.fetchone()[0]
+            else:
+                catering_id = catering_result[0]
+
+            # Fetch decor_id
+            cursor.execute("SELECT decor_id FROM decoration WHERE decor_style = %s", 
+                         (data['decor_style'],))
+            decor_result = cursor.fetchone()
+            if not decor_result:
+                cursor.execute("""
+                INSERT INTO decoration (decor_style, decor_cost)
+                VALUES (%s, %s)
+                RETURNING decor_id
+                """, (data['decor_style'], data['decor_cost']))
+                decor_id = cursor.fetchone()[0]
+            else:
+                decor_id = decor_result[0]
+
+            # Fetch entertainment_id
+            cursor.execute("SELECT entertainment_id FROM entertainment WHERE cost = %s", 
+                         (data['entertainment_cost'],))
+            entertainment_result = cursor.fetchone()
+            if not entertainment_result:
+                cursor.execute("""
+                INSERT INTO entertainment (cost)
+                VALUES (%s)
+                RETURNING entertainment_id
+                """, (data['entertainment_cost'],))
+                entertainment_id = cursor.fetchone()[0]
+            else:
+                entertainment_id = entertainment_result[0]
+
+            # Create the event with proper value extraction
             cursor.execute("""
                 INSERT INTO event (
                     event_type, event_date, venue_id, catering_id, 
-                    decor_id, customer_id
+                    decor_id, customer_id, entertainment_id
                 )
-                VALUES (%s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
                 RETURNING event_id
             """, (
-                data['eventType'],    # Event type (e.g., birthday, wedding)
-                data['eventDate'],    # Event date
-                data['venue'],         # Venue ID
-                data['catering'],      # Catering ID
-                data['decoration'],    # Decoration ID
-                customer_id            # Customer ID
+                data['eventType'],
+                data['eventDate'],
+                venue_id,
+                catering_id,
+                decor_id,
+                customer_id,  # This comes from earlier customer handling
+                entertainment_id
             ))
 
-            # Fetch the generated event_id
             event_id = cursor.fetchone()[0]
             conn.commit()
 
             return jsonify({
                 "success": True,
                 "message": "Event booked successfully",
-                "event_id": event_id,
-                "total_cost": calculate_event_cost(data)
+                "event_id": event_id
             })
-            
+
     except Exception as e:
         if conn:
             conn.rollback()
@@ -206,6 +315,10 @@ def create_event():
     finally:
         if conn:
             return_db_connection(conn)
+
+
+
+
 
 def calculate_event_cost(data):
     CATERING_PRICES = {
