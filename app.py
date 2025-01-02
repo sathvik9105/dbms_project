@@ -89,7 +89,11 @@ venues = {
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    if(get_db_connection):
+        print("Database connection successful")
+        return render_template('index.html')
+    else:
+        return "Database connection failed"
 
 # Exempt CSRF for API endpoints
 @csrf.exempt
@@ -157,7 +161,7 @@ def create_event():
             else:
                 # Create new customer
                 cursor.execute("""
-                    INSERT INTO customer (name, phone, email)
+                    INSERT INTO customer (first_name, last_name, phone, email)
                     VALUES (%s, %s, %s)
                     RETURNING customer_id
                 """, (
