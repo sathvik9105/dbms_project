@@ -6,7 +6,7 @@ from psycopg2 import pool
 from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'  # Change this to a secure secret key
+app.config['SECRET_KEY'] = 'your-secret-key-here'  # Replace with a secure key
 csrf = CSRFProtect(app)
 
 # Database configuration
@@ -19,16 +19,73 @@ DB_CONFIG = {
 }
 
 # Create connection pool
-connection_pool = psycopg2.pool.SimpleConnectionPool(
-    1, 20,
-    **DB_CONFIG
-)
+try:
+    connection_pool = psycopg2.pool.SimpleConnectionPool(
+        minconn=1,
+        maxconn=10,
+        **DB_CONFIG
+    )
+except psycopg2.OperationalError as e:
+    print(f"Error: Unable to connect to the database: {e}")
+    exit(1)
 
 def get_db_connection():
     return connection_pool.getconn()
 
 def return_db_connection(conn):
     connection_pool.putconn(conn)
+
+
+venues = {
+    "birthday": [
+        {"name": "Noma Convention", "facilities": ["ac", "valet_parking"], "capacity": 200},
+        {"name": "Balaji Function Hall", "facilities": ["non_ac", "internet"], "capacity": 150},
+        {"name": "Grand Paradise", "facilities": ["ac", "internet", "led_screens"], "capacity": 300},
+        {"name": "Sunshine Hall", "facilities": ["non_ac", "valet_parking"], "capacity": 100}
+    ],
+    "wedding": [
+        {"name": "Royal Orchid Palace", "facilities": ["ac", "valet_parking", "led_screens"], "capacity": 500},
+        {"name": "Vivanta Taj", "facilities": ["ac", "internet", "led_screens"], "capacity": 400},
+        {"name": "The Oberoi Venue", "facilities": ["ac", "valet_parking", "internet"], "capacity": 600},
+        {"name": "Leela Banquet Hall", "facilities": ["ac", "valet_parking", "internet"], "capacity": 450}
+    ],
+    "house_warming": [
+      { "name": "Cozy Corner", "facilities": ["ac", "internet"], "capacity": 100 },
+      { "name": "Home Sweet Home", "facilities": ["non_ac", "valet_parking"], "capacity": 80 },
+      { "name": "Garden Paradise", "facilities": ["non_ac", "internet"], "capacity": 120 },
+      { "name": "Urban Nest", "facilities": ["ac", "valet_parking"], "capacity": 150 }
+    ],
+    "baby_shower": [
+      { "name": "Little Angels Hall", "facilities": ["ac", "internet"], "capacity": 100 },
+      { "name": "Tiny Tots Paradise", "facilities": ["ac", "valet_parking"], "capacity": 120 },
+      { "name": "Stork's Corner", "facilities": ["non_ac", "internet"], "capacity": 80 },
+      { "name": "Baby Bliss Center", "facilities": ["ac", "led_screens"], "capacity": 150 }
+    ],
+    "reunion": [
+      { "name": "Memory Lane Hall", "facilities": ["ac", "internet", "led_screens"], "capacity": 200 },
+      { "name": "Nostalgia Palace", "facilities": ["ac", "valet_parking"], "capacity": 250 },
+      { "name": "Friends Forever Center", "facilities": ["non_ac", "internet"], "capacity": 180 },
+      { "name": "Reunion Plaza", "facilities": ["ac", "valet_parking", "led_screens"], "capacity": 300 }
+    ],
+    "engagement": [
+      { "name": "Promise Banquet", "facilities": ["ac", "internet", "led_screens"], "capacity": 300 },
+      { "name": "Love Knot Venue", "facilities": ["ac", "valet_parking"], "capacity": 250 },
+      { "name": "Celebration Hall", "facilities": ["ac", "valet_parking", "led_screens"], "capacity": 400 },
+      { "name": "Dreamland Banquet", "facilities": ["ac", "internet", "led_screens"], "capacity": 350 }
+    ],
+    "reception": [
+      { "name": "Grand Celebration Center", "facilities": ["ac", "valet_parking", "led_screens"], "capacity": 600 },
+      { "name": "Royal Reception Hall", "facilities": ["ac", "internet", "led_screens"], "capacity": 500 },
+      { "name": "Majestic Manor", "facilities": ["ac", "valet_parking", "internet"], "capacity": 700 },
+      { "name": "Elite Events Plaza", "facilities": ["ac", "valet_parking", "led_screens"], "capacity": 550 }
+    ],
+    "conference": [
+      { "name": "Tech Park Hall", "facilities": ["ac", "internet", "led_screens"], "capacity": 200 },
+      { "name": "Business Center", "facilities": ["ac", "valet_parking", "internet"], "capacity": 150 },
+      { "name": "Corporate Plaza", "facilities": ["ac", "internet", "led_screens"], "capacity": 300 },
+      { "name": "Executive Summit Hall", "facilities": ["ac", "valet_parking", "led_screens"], "capacity": 250 }
+    ]
+}
 
 @app.route('/')
 def home():
@@ -40,15 +97,16 @@ def home():
 def get_venue_options():
     try:
         event_type = request.args.get('event_type')
-        facility = request.args.get('facility')
-        guest_count = request.args.get('guest_count')
 
         if not event_type:
             return jsonify({"success": False, "error": "Event type is required"}), 400
 
+        if event_type not in venues:
+            return jsonify({"success": False, "error": "Invalid event type"}), 400
+
         return jsonify({
             "success": True,
-            "message": "Use frontend venues data for filtering"
+            "data": venues[event_type]
         })
 
     except Exception as e:
@@ -75,57 +133,61 @@ def create_event():
                 }), 400
 
         with conn.cursor() as cursor:
-            # First, check if customer already exists
+            # Check if customer already exists
             cursor.execute("""
                 SELECT customer_id FROM customer 
-                WHERE contact_info = %s
-            """, (data['contact_info'],))
-            
+                WHERE phone = %s OR email = %s
+            """, (data['contact_info']['phone'], data['contact_info']['email']))
+
             customer_result = cursor.fetchone()
-            
+
             if customer_result:
                 customer_id = customer_result[0]
                 # Update customer information
                 cursor.execute("""
                     UPDATE customer 
-                    SET name = %s, address = %s 
+                    SET name = %s, phone = %s, email = %s
                     WHERE customer_id = %s
-                """, (data['customer_name'], data.get('address', ''), customer_id))
+                """, (
+                    data['customer_name'], 
+                    data['contact_info']['phone'], 
+                    data['contact_info']['email'], 
+                    customer_id
+                ))
             else:
                 # Create new customer
                 cursor.execute("""
-                    INSERT INTO customer (name, contact_info, address)
+                    INSERT INTO customer (name, phone, email)
                     VALUES (%s, %s, %s)
                     RETURNING customer_id
-                """, (data['customer_name'], data['contact_info'], data.get('address', '')))
+                """, (
+                    data['customer_name'], 
+                    data['contact_info']['phone'], 
+                    data['contact_info']['email']
+                ))
                 customer_id = cursor.fetchone()[0]
-            
+
             # Create event
             cursor.execute("""
                 INSERT INTO event (
-                    customer_id, event_type, event_date, guest_count,
-                    venue, catering, decoration, entertainment,
-                    created_at, total_cost, status
+                    event_type, event_date, venue_id, catering_id, 
+                    decor_id, customer_id
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 RETURNING event_id
             """, (
-                customer_id,
-                data['event_type'],
-                data['event_date'],
-                data['guest_count'],
-                data['venue'],
-                data['catering'],
-                data['decoration'],
-                data['entertainment'],
-                datetime.now(),
-                calculate_event_cost(data),
-                'pending'
+                data['event_type'],    # Event type (e.g., birthday, wedding)
+                data['event_date'],    # Event date
+                data['venue'],         # Venue ID
+                data['catering'],      # Catering ID
+                data['decoration'],    # Decoration ID
+                customer_id            # Customer ID
             ))
-            
+
+            # Fetch the generated event_id
             event_id = cursor.fetchone()[0]
             conn.commit()
-            
+
             return jsonify({
                 "success": True,
                 "message": "Event booked successfully",
@@ -188,7 +250,7 @@ def get_event(event_id):
         conn = get_db_connection()
         with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
             cursor.execute("""
-                SELECT e.*, c.name as customer_name, c.contact_info, c.address
+                SELECT e.*, c.name as customer_name, c.phone, c.email
                 FROM event e
                 JOIN customer c ON e.customer_id = c.customer_id
                 WHERE e.event_id = %s

@@ -3,79 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Gatherly - Event Booking Platform</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
-<body class="bg-gray-50">
-  <!-- Hero Section with Navigation -->
-  <div class="relative bg-purple-600 min-h-screen">
-    <nav class="absolute top-0 left-0 right-0 z-50">
-      <div class="container mx-auto px-6 py-4">
-        <div class="flex items-center justify-between">
-          <div class="text-white text-3xl font-bold">Gatherly</div>
-          <div class="hidden md:flex space-x-8">
-            <a href="#" class="text-white hover:text-purple-200">Home</a>
-            <a href="#" class="text-white hover:text-purple-200">About</a>
-            <a href="#" class="text-white hover:text-purple-200">Contact</a>
-          </div>
-          <button class="md:hidden text-white">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </nav>
-
-    <!-- Hero Content -->
-    <div class="container mx-auto px-6 h-screen flex items-center">
-      <div class="max-w-2xl text-white">
-        <h1 class="text-5xl font-bold mb-8">Plan Your Perfect Event</h1>
-        <p class="text-xl mb-8">Choose venues, catering, and decorations all in one place!</p>
-        <a href="#booking-form" class="bg-white text-purple-600 px-8 py-3 rounded-lg font-semibold hover:bg-purple-100 transition-colors">
-          Start Planning
-        </a>
-      </div>
+<body class="bg-gray-50 text-gray-800">
+  <nav class="bg-purple-600 text-white p-4 sticky top-0 z-10">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold">Gatherly</h1>
+      <ul class="flex space-x-6">
+        <li><a href="#" class="hover:underline">Home</a></li>
+        <li><a href="#" class="hover:underline">About</a></li>
+        <li><a href="#" class="hover:underline">Contact</a></li>
+      </ul>
     </div>
-  </div>
+  </nav>
 
-  <main class="container mx-auto my-8 px-4" id="booking-form">
+  <header class="bg-purple-100 text-purple-800 py-12 text-center">
+    <h2 class="text-4xl font-bold mb-4">Plan Your Perfect Event</h2>
+    <p class="text-xl">Choose venues, catering, and decorations all in one place!</p>
+  </header>
+
+  <main class="container mx-auto my-8 px-4">
     <form id="eventForm" class="bg-white shadow-xl rounded-lg p-8 max-w-4xl mx-auto space-y-6">
       <h3 class="text-2xl font-semibold text-purple-600 mb-8">Event Booking Form</h3>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label for="customerName" class="block font-medium mb-2">Customer Name*</label>
-          <input type="text" id="customerName" name="customerName" class="border rounded w-full p-3" required>
+          <label for="first_name" class="block font-medium mb-2">First Name*</label>
+          <input type="text" id="first_name" class="border rounded w-full p-3" required>
         </div>
+        <div class="mt-4">
+          <label for="last_name" class="block font-medium mb-2">Last Name*</label>
+          <input type="text" id="last_name" class="border rounded w-full p-3" required>
+        </div>
+        
         <div>
           <label for="contactInfo" class="block font-medium mb-2">Contact Info*</label>
-          <input type="text" id="contactInfo" name="contactInfo" class="border rounded w-full p-3" required>
+          <input type="text" id="contactInfo" class="border rounded w-full p-3" required>
         </div>
       </div>
 
       <div>
         <label for="address" class="block font-medium mb-2">Address</label>
-        <textarea id="address" name="address" class="border rounded w-full p-3 h-24"></textarea>
+        <textarea id="address" class="border rounded w-full p-3 h-24"></textarea>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label for="guestCount" class="block font-medium mb-2">Number of Guests*</label>
-          <input type="number" id="guestCount" name="guestCount" min="1" class="border rounded w-full p-3" required>
+          <input type="number" id="guestCount" min="1" class="border rounded w-full p-3" required>
         </div>
         <div>
           <label for="eventDate" class="block font-medium mb-2">Event Date*</label>
-          <input type="text" id="eventDate" name="eventDate" class="border rounded w-full p-3" required>
+          <input type="text" id="eventDate" class="border rounded w-full p-3" required>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label for="eventType" class="block font-medium mb-2">Event Type*</label>
-          <select id="eventType" name="eventType" class="border rounded w-full p-3" required>
+          <select id="eventType" class="border rounded w-full p-3" required>
             <option value="">Select event type</option>
             <option value="birthday">Birthday</option>
             <option value="wedding">Wedding</option>
@@ -89,7 +78,7 @@
         </div>
         <div>
           <label for="facilities" class="block font-medium mb-2">Facilities</label>
-          <select id="facilities" name="facilities" class="border rounded w-full p-3">
+          <select id="facilities" class="border rounded w-full p-3">
             <option value="">Any facility</option>
             <option value="ac">AC</option>
             <option value="non_ac">Non-AC</option>
@@ -102,28 +91,38 @@
 
       <div>
         <label for="venue" class="block font-medium mb-2">Venue*</label>
-        <select id="venue" name="venue" class="border rounded w-full p-3" required>
+        <select id="venue" class="border rounded w-full p-3" required>
           <option value="">Select venue</option>
         </select>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label for="catering" class="block font-medium mb-2">Catering*</label>
-          <select id="catering" name="catering" class="border rounded w-full p-3" required>
-            <option value="indian">Indian - ₹500/plate</option>
-            <option value="continental">Continental - ₹700/plate</option>
-            <option value="chinese">Chinese - ₹600/plate</option>
-            <option value="italian">Italian - ₹800/plate</option>
-            <option value="mexican">Mexican - ₹900/plate</option>
-            <option value="japanese">Japanese - ₹1000/plate</option>
-            <option value="thai">Thai - ₹750/plate</option>
-            <option value="vegan_special">Vegan Special - ₹850/plate</option>
-          </select>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="catering" class="block font-medium mb-2">Catering*</label>
+            <select id="catering" class="border rounded w-full p-3" required>
+              <option value="">Select catering type</option>
+              <option value="indian">Indian - ₹500/plate</option>
+              <option value="continental">Continental - ₹700/plate</option>
+              <option value="chinese">Chinese - ₹600/plate</option>
+              <option value="italian">Italian - ₹800/plate</option>
+              <option value="mexican">Mexican - ₹900/plate</option>
+              <option value="japanese">Japanese - ₹1000/plate</option>
+              <option value="thai">Thai - ₹750/plate</option>
+              <option value="vegan_special">Vegan Special - ₹850/plate</option>
+            </select>
+          </div>
+          <div>
+            <label for="cateringMenu" class="block font-medium mb-2">Catering Menu*</label>
+            <select id="cateringMenu" class="border rounded w-full p-3" required>
+              <option value="">Select menu</option>
+            </select>
+          </div>
         </div>
+        
         <div>
           <label for="decoration" class="block font-medium mb-2">Decoration*</label>
-          <select id="decoration" name="decoration" class="border rounded w-full p-3" required>
+          <select id="decoration" class="border rounded w-full p-3" required>
             <option value="simple">Simple - ₹5,000</option>
             <option value="premium">Premium - ₹10,000</option>
             <option value="luxury">Luxury - ₹20,000</option>
@@ -133,7 +132,7 @@
 
       <div>
         <label for="entertainment" class="block font-medium mb-2">Entertainment*</label>
-        <select id="entertainment" name="entertainment" class="border rounded w-full p-3" required>
+        <select id="entertainment" class="border rounded w-full p-3" required>
           <option value="music">Music - ₹8,000</option>
           <option value="dance">Dance - ₹12,000</option>
           <option value="comedy">Comedy - ₹15,000</option>
@@ -153,45 +152,110 @@
     </div>
   </main>
 
-  <footer class="bg-purple-900 text-white py-12">
-    <div class="container mx-auto px-6">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
-        <div>
-          <h3 class="text-2xl font-bold mb-4">Gatherly</h3>
-          <p>Making moments memorable since 2015</p>
-        </div>
-        <div>
-          <h4 class="font-semibold mb-4">Quick Links</h4>
-          <ul class="space-y-2">
-            <li><a href="#" class="hover:text-purple-200">Home</a></li>
-            <li><a href="#" class="hover:text-purple-200">About</a></li>
-            <li><a href="#" class="hover:text-purple-200">Contact</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4 class="font-semibold mb-4">Services</h4>
-          <ul class="space-y-2">
-            <li><a href="#" class="hover:text-purple-200">Wedding Planning</a></li>
-            <li><a href="#" class="hover:text-purple-200">Corporate Events</a></li>
-            <li><a href="#" class="hover:text-purple-200">Birthday Parties</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4 class="font-semibold mb-4">Contact Us</h4>
-          <ul class="space-y-2">
-            <li>contact@gatherly.com</li>
-            <li>+91 98765 43210</li>
-            <li>Mumbai, India</li>
-          </ul>
-        </div>
-      </div>
-      <div class="border-t border-purple-800 mt-12 pt-8 text-center">
-        <p>&copy; 2025 Gatherly. All Rights Reserved.</p>
-      </div>
+  <footer class="bg-purple-600 text-white py-6 mt-12">
+    <div class="container mx-auto text-center">
+      <p>&copy; 2025 Gatherly. All Rights Reserved.</p>
     </div>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="/static/js/script.js"></script>
+  <script>
+  
+  const cateringMenuOptions = {
+    indian: [
+      { name: "North Indian Thali", price: 500 },
+      { name: "Bengali Thali", price: 600 },
+      { name: "Hyderabadi Thali", price: 650 },
+    ],
+    continental: [
+      { name: "Chocolate Mousse", price: 700 },
+      { name: "Fruit Tart", price: 750 },
+      { name: "Vegetable Ratatouille", price: 800 },
+    ],
+    chinese: [
+      { name: "Mapo Tofu", price: 600 },
+      { name: "Chinese Cucumber Salad", price: 550 },
+      { name: "Sesame Balls (Jian Dui)", price: 650 },
+    ],
+    italian: [
+      { name: "Bruschetta", price: 800 },
+      { name: "Frittata", price: 850 },
+      { name: "Risotto alla Milanese", price: 900 },
+      { name: "Panna Cotta", price: 950 },
+    ],
+    mexican: [
+      { name: "Pico de Gallo", price: 900 },
+      { name: "Tacos", price: 950 },
+      { name: "Enchiladas", price: 1000 },
+      { name: "Churros", price: 1100 },
+    ],
+    japanese: [
+      { name: "Sushi", price: 1000 },
+      { name: "Ramen", price: 1050 },
+      { name: "Teriyaki Chicken", price: 1100 },
+      { name: "Mochi", price: 1200 },
+    ],
+    thai: [
+      { name: "Thai Fish Cakes (Tod Mun Pla)", price: 750 },
+      { name: "Thai Dumplings", price: 800 },
+      { name: "Massaman Curry", price: 850 },
+    ],
+    vegan_special: [
+      { name: "Jasmine Rice", price: 850 },
+      { name: "Vegan Fish Sauce", price: 900 },
+      { name: "Khao Soi (Vegan)", price: 950 },
+    ],
+  };
+
+  const cateringSelect = document.getElementById("catering");
+  const cateringMenuSelect = document.getElementById("cateringMenu");
+  const guestCountInput = document.getElementById("guestCount");
+  const eventForm = document.getElementById("eventForm");
+  const bookingSummary = document.getElementById("bookingSummary");
+  const summaryContent = document.getElementById("summaryContent");
+
+  cateringSelect.addEventListener("change", () => {
+    const selectedType = cateringSelect.value;
+    cateringMenuSelect.innerHTML = '<option value="">Select menu</option>';
+
+    if (cateringMenuOptions[selectedType]) {
+      cateringMenuOptions[selectedType].forEach((menu) => {
+        const option = document.createElement("option");
+        option.value = JSON.stringify(menu); // Store the menu as JSON for easy retrieval
+        option.textContent = `${menu.name} - ₹${menu.price}`;
+        cateringMenuSelect.appendChild(option);
+      });
+    }
+  });
+
+  eventForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const selectedMenuItem = cateringMenuSelect.value ? JSON.parse(cateringMenuSelect.value) : null;
+    const guestCount = parseInt(guestCountInput.value, 10) || 0;
+
+    let cateringAmount = 0;
+    let cateringSummary = "Not selected";
+
+    if (selectedMenuItem && guestCount > 0) {
+      cateringAmount = selectedMenuItem.price * guestCount;
+      cateringSummary = `${selectedMenuItem.name} for ${guestCount} guests (₹${selectedMenuItem.price}/plate)`;
+    }
+
+    summaryContent.innerHTML = `
+      <h3 class="text-xl font-semibold">Booking Summary</h3>
+      <p><strong>Catering Menu:</strong> ${cateringMenu || "Not selected"}</p>
+    `;
+
+    bookingSummary.classList.remove("hidden");
+  });
+  </script>
+  <script>
+    flatpickr("#eventDate", {
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      minDate: "today"
+    });
+  </script>
+  
+  <script src="/src/js/script.js"></script>
 </body>
 </html>
